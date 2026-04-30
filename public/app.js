@@ -8,13 +8,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if(document.getElementById('modalEditar')) modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
     if(document.getElementById('modalGasto')) modalGasto = new bootstrap.Modal(document.getElementById('modalGasto'));
     
-    cargarMarcas();
+    
 
     // Revisar si ya hay alguien con la sesión abierta
-    const sesionGuardada = localStorage.getItem('sesion_dealer');
+    const sesionGuardada = sessionStorage.getItem('sesion_dealer');
     if(sesionGuardada) {
         usuarioActual = JSON.parse(sesionGuardada);
         iniciarApp();
+        cargarMarcas();
+    } else {
+        document.getElementById('pantalla-login').classList.remove('d-none');
+        document.getElementById('aplicacion-principal').classList.add('d-none');
     }
 });
 
@@ -42,7 +46,7 @@ document.getElementById('formulario-login')?.addEventListener('submit', async (e
         const data = await res.json();
 
         if (data.success) {
-            localStorage.setItem('sesion_dealer', JSON.stringify(data.usuario));
+            sessionStorage.setItem('sesion_dealer', JSON.stringify(data.usuario));
             usuarioActual = data.usuario;
             document.getElementById('login-error').classList.add('d-none');
             iniciarApp();
@@ -65,9 +69,8 @@ document.getElementById('btn-acceso-vendedor')?.addEventListener('click', () => 
     };
     
     // Guardamos en el navegador y entramos
-    localStorage.setItem('sesion_dealer', JSON.stringify(sesionVendedor));
+    sessionStorage.setItem('sesion_dealer', JSON.stringify(sesionVendedor));
     usuarioActual = sesionVendedor;
-    
     iniciarApp();
 });
 
@@ -93,7 +96,7 @@ function iniciarApp() {
 
 // Lógica de Cerrar Sesión
 document.getElementById('btn-logout')?.addEventListener('click', () => {
-    localStorage.removeItem('sesion_dealer');
+    sessionStorage.removeItem('sesion_dealer');
     window.location.reload(); // Recarga la página y vuelve al login
 });
 
