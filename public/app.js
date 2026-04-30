@@ -1,4 +1,5 @@
-let modalVender, modalEditar, modalGasto;
+let modalVender, modalEditar, modalEliminarVehiculo, modalGasto, modalEditarGasto, modalEliminarGasto;
+let listaGastosActual = [];
 let usuarioActual = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if(document.getElementById('modalVender')) modalVender = new bootstrap.Modal(document.getElementById('modalVender'));
     if(document.getElementById('modalEditar')) modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
     if(document.getElementById('modalGasto')) modalGasto = new bootstrap.Modal(document.getElementById('modalGasto'));
+    if(document.getElementById('modalEliminarVehiculo')) modalEliminarVehiculo = new bootstrap.Modal(document.getElementById('modalEliminarVehiculo'));
+    if(document.getElementById('modalEditarGasto')) modalEditarGasto = new bootstrap.Modal(document.getElementById('modalEditarGasto'));
+    if(document.getElementById('modalEliminarGasto')) modalEliminarGasto = new bootstrap.Modal(document.getElementById('modalEliminarGasto'));
     
     document.getElementById('login-usuario').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -229,7 +233,7 @@ async function cargarVehiculos() {
                 botonesHTML = `
                     <button class="btn btn-sm btn-outline-primary mb-1 shadow-sm" onclick="abrirModalEditar(${vehiculo.id})">Editar</button>
                     <button class="btn btn-sm btn-outline-success mb-1 shadow-sm" onclick="abrirModalVender(${vehiculo.id})">Vender</button>
-                    <button class="btn btn-sm btn-outline-danger mb-1 shadow-sm" onclick="eliminarVehiculo(${vehiculo.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-outline-danger mb-1 shadow-sm" onclick="abrirModalEliminarVehiculo(${vehiculo.id})">Eliminar</button>
                 `;
             } else {
                 // Si es vendedor, solo ve una etiqueta
@@ -250,13 +254,6 @@ async function cargarVehiculos() {
         });
     } catch (error) { 
         console.error("Error al cargar vehículos:", error); 
-    }
-}
-
-async function eliminarVehiculo(id) {
-    if (confirm("⚠️ ¿Estás seguro de que deseas ELIMINAR este vehículo?")) {
-        await fetch(`http://localhost:3000/vehiculos/${id}`, { method: 'DELETE' });
-        cargarVehiculos();
     }
 }
 
@@ -377,6 +374,7 @@ async function cargarGastos() {
     try {
         const res = await fetch('http://localhost:3000/gastos');
         const gastos = await res.json();
+        listaGastosActual = gastos;
         const tbody = document.getElementById('tabla-gastos');
         if(!tbody) return;
         
@@ -420,6 +418,18 @@ async function cargarGastos() {
                 </td>
                 <td>${asociado}</td>
                 <td class="text-danger fw-bold">-${monto}</td>
+                <td>
+                    <div class="d-flex flex-column flex-md-row gap-2">
+                        
+                        <button class="btn btn-outline-primary btn-sm" onclick="abrirModalEditarGasto(${gasto.id})">
+                            Editar
+                        </button>
+                        
+                        <button class="btn btn-outline-danger btn-sm" onclick="abrirModalEliminarGasto(${gasto.id})">
+                            Eliminar
+                        </button>
+                    </div>
+                </td>
             `;
             tbody.appendChild(fila);
         });
@@ -457,7 +467,7 @@ if(inputSubtotal && inputItbis) {
     inputItbis.addEventListener('input', calcularTotal);
 }
 
-// Codigo para abrir el modal
+// Codigo para abrir el modal (GASTOS)
 document.getElementById('btn-nuevo-gasto')?.addEventListener('click', () => {
     cargarVehiculosParaGastos(); 
     const formGasto = document.getElementById('formulario-gasto');
@@ -500,3 +510,116 @@ document.getElementById('formulario-gasto')?.addEventListener('submit', async (e
         }
     } catch (error) { console.error(error); }
 });
+
+
+function abrirModalEliminarVehiculo(idVehiculo) {
+    document.getElementById('delete-vehiculo-id').value = idVehiculo;
+    modalEliminarVehiculo.show();
+}
+
+async function confirmarEliminarVehiculo() {
+    const idVehiculo = document.getElementById('delete-vehiculo-id').value;
+    document.activeElement.blur(); 
+    try {
+        const res = await fetch(`http://localhost:3000/vehiculos/${idVehiculo}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            modalEliminarVehiculo.hide();
+            cargarVehiculos();
+        } else {
+            console.error("Error al eliminar el vehículo");
+        }
+    } catch (error) {
+        console.error("Error de conexión:", error);
+    }
+}
+
+function abrirModalEditarGasto(idGasto) {
+    // Usamos == por si el ID viene como texto desde el HTML
+    const gasto = listaGastosActual.find(g => g.id == idGasto);
+    
+    if (!gasto) {
+        console.error("No se encontró el gasto con ID:", idGasto);
+        return;
+    }
+
+    document.getElementById('edit-gasto-id').value = gasto.id;
+
+    if (gasto.fecha_gasto) { 
+        document.getElementById('edit-gasto-fecha').value = gasto.fecha_gasto.split('T')[0];
+    }
+    
+    if (gasto.monto_total) {
+        const montoLimpio = gasto.monto_total.toString().replace(/[^0-9.-]+/g, ""); 
+        document.getElementById('edit-gasto-monto').value = montoLimpio;
+    }
+
+    document.getElementById('edit-gasto-descripcion').value = gasto.concepto || '';
+    document.getElementById('edit-gasto-categoria').value = gasto.categoria || '';
+    
+    // Si vehiculo_id es null o 0, mostramos "Gasto General"
+    document.getElementById('edit-gasto-asociado').value = gasto.vehiculo_id || 'Gasto General';
+    modalEditarGasto.show();
+}
+
+async function guardarEdicionGasto() {
+    const idGasto = document.getElementById('edit-gasto-id').value;
+    
+    const datosActualizados = {
+        fecha_gasto: document.getElementById('edit-gasto-fecha').value,
+        monto_total: parseFloat(document.getElementById('edit-gasto-monto').value),
+        concepto: document.getElementById('edit-gasto-descripcion').value,
+        categoria: document.getElementById('edit-gasto-categoria').value,
+        vehiculo_id: document.getElementById('edit-gasto-asociado').value === 'Gasto General' 
+                     ? null 
+                     : document.getElementById('edit-gasto-asociado').value
+    };
+
+    try {
+        const res = await fetch(`http://localhost:3000/gastos/${idGasto}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datosActualizados)
+        });
+
+        if (res.ok) {
+            document.activeElement.blur();
+            modalEditarGasto.hide();
+            cargarGastos();
+        } else {
+            console.error("Error al actualizar el gasto en el servidor.");
+        }
+    } catch (error) {
+        console.error("Error de conexión:", error);
+    }
+}
+
+
+function abrirModalEliminarGasto(idGasto) {
+    // Guardamos el ID en el input oculto del modal de confirmación
+    document.getElementById('delete-gasto-id').value = idGasto;
+    modalEliminarGasto.show();
+}
+
+async function confirmarEliminarGasto() {
+    const idGasto = document.getElementById('delete-gasto-id').value;
+
+    try {
+        // Enviamos la petición DELETE a tu servidor (Asegúrate de crear esta ruta DELETE en index.js)
+        const res = await fetch(`http://localhost:3000/gastos/${idGasto}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            document.activeElement.blur();
+            modalEliminarGasto.hide();
+            cargarGastos(); // Recargamos la tabla
+        } else {
+            console.error("Error al eliminar el gasto");
+        }
+    } catch (error) {
+        console.error("Error de conexión:", error);
+    }
+}

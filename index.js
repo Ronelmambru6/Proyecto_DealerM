@@ -117,12 +117,28 @@ app.put('/vehiculos/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Error al guardar cambios' }); }
 });
 
+// ==========================================
+// RUTA PARA ELIMINAR UN VEHÍCULO (DELETE)
+// ==========================================
 app.delete('/vehiculos/:id', async (req, res) => {
     try {
-        await db.query('DELETE FROM vehiculos WHERE id = ?', [req.params.id]);
-        res.json({ mensaje: 'Eliminado correctamente' });
-    } catch (error) { res.status(500).json({ error: 'Error al borrar' }); }
+        const idVehiculo = req.params.id;
+
+        const query = 'DELETE FROM vehiculos WHERE id = ?';
+        const [resultado] = await db.query(query, [idVehiculo]);
+
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Vehículo no encontrado' });
+        }
+
+        res.json({ success: true, message: 'Vehículo eliminado del inventario' });
+
+    } catch (error) {
+        console.error("Error al eliminar el vehículo:", error);
+        res.status(500).json({ error: 'Error interno del servidor al eliminar' });
+    }
 });
+
 
 // ==========================================
 // MÓDULO DE GASTOS
@@ -157,6 +173,63 @@ app.post('/gastos', async (req, res) => {
     } catch (error) { 
         console.error(error);
         res.status(500).json({ error: 'Error al registrar gasto' }); 
+    }
+});
+
+
+// ==========================================
+// RUTA PARA EDITAR UN GASTO (PUT)
+// ==========================================
+app.put('/gastos/:id', async (req, res) => {
+    try {
+        const idGasto = req.params.id;
+        // Extraemos los datos que nos mandó el frontend en el body
+        const { fecha_gasto, monto_total, concepto, categoria, vehiculo_id } = req.body;
+
+        // Armamos la consulta SQL de actualización
+        const query = `
+            UPDATE gastos 
+            SET fecha_gasto = ?, monto_total = ?, concepto = ?, categoria = ?, vehiculo_id = ?
+            WHERE id = ?
+        `;
+        
+        // Ejecutamos la consulta pasándole los valores en el mismo orden de los signos de interrogación
+        const [resultado] = await db.query(query, [fecha_gasto, monto_total, concepto, categoria, vehiculo_id, idGasto]);
+
+        // Verificamos si realmente se modificó alguna fila
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Gasto no encontrado' });
+        }
+
+        res.json({ success: true, message: 'Gasto actualizado correctamente' });
+
+    } catch (error) {
+        console.error("Error al actualizar el gasto:", error);
+        res.status(500).json({ error: 'Error interno del servidor al actualizar' });
+    }
+});
+
+
+// ==========================================
+// RUTA PARA ELIMINAR UN GASTO (DELETE)
+// ==========================================
+app.delete('/gastos/:id', async (req, res) => {
+    try {
+        const idGasto = req.params.id;
+
+        // Ejecutamos la consulta de borrado
+        const query = 'DELETE FROM gastos WHERE id = ?';
+        const [resultado] = await db.query(query, [idGasto]);
+
+        if (resultado.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Gasto no encontrado' });
+        }
+
+        res.json({ success: true, message: 'Gasto eliminado permanentemente' });
+
+    } catch (error) {
+        console.error("Error al eliminar el gasto:", error);
+        res.status(500).json({ error: 'Error interno del servidor al eliminar' });
     }
 });
 

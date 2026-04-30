@@ -94,43 +94,43 @@
 <body class="bg-light">
 
     <div id="pantalla-login">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-5 col-lg-4">
-                <div class="card shadow-lg border-0 rounded-4 card-login">
-                    <div class="card-body p-4 p-md-5">
-                        <div class="text-center mb-4">
-                            <img class="img-fluid mb-3 shadow-sm" style="max-height: 100px; width: 80%; object-fit: cover;" src="resources/mambru autoimport.png" alt="Logo de login">
-                            <h4 class="fw-bold mt-2">DEALER MANAGER</h4>
-                            <p class="text-muted">Gestión de Inventario</p>
-                        </div>
-                        
-                        <form id="formulario-login">
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small">Usuario</label>
-                                <input type="text" id="login-usuario" class="form-control" placeholder="Nombre de usuario">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-5 col-lg-4">
+                    <div class="card shadow-lg border-0 rounded-4 card-login">
+                        <div class="card-body p-4 p-md-5">
+                            <div class="text-center mb-4">
+                                <img class="img-fluid mb-3 shadow-sm" style="max-height: 100px; width: 80%; object-fit: cover;" src="resources/mambru autoimport.png" alt="Logo de login">
+                                <h4 class="fw-bold mt-2">DEALER MANAGER</h4>
+                                <p class="text-muted">Gestión de Inventario</p>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small">Contraseña</label>
-                                <input type="password" id="login-password" class="form-control" placeholder="Ingrese contraseña">
+                            
+                            <form id="formulario-login">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Usuario</label>
+                                    <input type="text" id="login-usuario" class="form-control" placeholder="Nombre de usuario">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Contraseña</label>
+                                    <input type="password" id="login-password" class="form-control" placeholder="Ingrese contraseña">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 fw-bold mb-2 shadow-sm">Entrar al Sistema</button>
+                                <div id="login-error" class="text-danger-emphasis fw-bolder  mt-2 mb-3 text-center d-none"><small>Credenciales incorrectas</small></div>
+                            </form>
+
+                            <div class="position-relative my-3">
+                                <hr class="text-white opacity-50"> 
                             </div>
-                            <button type="submit" class="btn btn-primary w-100 fw-bold mb-2 shadow-sm">Entrar al Sistema</button>
-                            <div id="login-error" class="text-danger-emphasis fw-bolder  mt-2 mb-3 text-center d-none"><small>Credenciales incorrectas</small></div>
-                        </form>
 
-                        <div class="position-relative my-3">
-                            <hr class="text-white opacity-50"> 
+                            <button type="button" id="btn-acceso-vendedor" class="btn btn-outline-dark w-100 fw-bold">
+                                Acceder como Vendedor
+                            </button>
                         </div>
-
-                        <button type="button" id="btn-acceso-vendedor" class="btn btn-outline-dark w-100 fw-bold">
-                            Acceder como Vendedor
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <div id="aplicacion-principal" class="d-none">
         <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-lg sticky-top">
@@ -307,6 +307,34 @@
         </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- MODAL: ELIMINAR VEHÍCULO                       -->
+    <!-- ============================================== -->
+    <div class="modal fade" id="modalEliminarVehiculo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Eliminar Vehículo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                
+                <div class="modal-body text-center py-4">
+                    <h5 class="mb-3 text-danger fw-bold">¿Estás completamente seguro?</h5>
+                    <p class="text-muted">Esta acción eliminará este vehículo del inventario y no se podrá recuperar.</p>
+                    <!-- Aquí guardamos el ID en secreto -->
+                    <input type="hidden" id="delete-vehiculo-id">
+                </div>
+                
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmarEliminarVehiculo()">Sí, eliminar</button>
+                </div>
+            
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL PARA EDITAR INFORMACION --> 
     <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -385,11 +413,11 @@
 
 
 
-    <div id="seccion-gastos" class="d-none container mt-4 mb-5">
+        <div id="seccion-gastos" class="d-none container mt-4 mb-5">
             <div class="card shadow rounded-4">
                 <div class="card-header rounded-4 bg-white text-dark d-flex justify-content-between align-items-center border-bottom-0 pt-4 pb-0">
                     <h4 class="fw-bold mb-0">Gastos y Facturas</h4>
-                    <button class="btn btn-primary shadow-sm" id="btn-nuevo-gasto">Registrar Nuevo Gasto</button>
+                    <button class="btn btn-primary shadow-sm" id="btn-nuevo-gasto">Registrar Gasto</button>
                 </div>
                 <div class="card-body">
                     <p class="text-muted mb-4">Registra mantenimientos, piezas o gastos administrativos. Almacena facturas e-CF y lleva un registro de todo.</p>
@@ -397,10 +425,11 @@
                         <table class="table table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Fecha</th>
-                                    <th>Descripción</th>
-                                    <th>Asociado a</th>
-                                    <th>Monto ($)</th>
+                                    <th scope="col">Fecha</th>
+                                    <th scope="col">Descripción</th>
+                                    <th scope="col">Asociado a</th>
+                                    <th scope="col">Monto ($)</th>
+                                    <th scope="col">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-gastos">
@@ -485,6 +514,100 @@
                             <button type="submit" class="btn btn-primary w-100 shadow-sm mt-2">Guardar Gasto</button>
                         </form>
                     </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- ============================================== -->
+        <!-- MODAL: EDITAR GASTO                            -->
+        <!-- ============================================== -->
+        <div class="modal fade" id="modalEditarGasto" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg"> 
+                <div class="modal-content">
+                
+                    <div class="modal-header bg-danger text-white rounded-top-4">
+                        <h5 class="modal-title">Editar Gasto o Factura</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    
+                    <!-- Cuerpo del Formulario -->
+                    <div class="modal-body rounded-4">
+                        <form id="form-editar-gasto">
+                        <!-- Campo oculto para guardar el ID del gasto que estamos editando -->
+                        <input type="hidden" id="edit-gasto-id">
+                        
+                        <div class="row g-3">
+
+                            <!-- Fila 1 -->
+                            <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Fecha</label>
+                            <input type="date" class="form-control" id="edit-gasto-fecha">
+                            </div>
+                            <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Monto ($)</label>
+                            <input type="number" step="0.01" class="form-control" id="edit-gasto-monto">
+                            </div>
+                            
+                            <!-- Fila 2 (Ocupa todo el ancho: col-12) -->
+                            <div class="col-12">
+                            <label class="form-label text-muted small fw-bold">Descripción</label>
+                            <input type="text" class="form-control" id="edit-gasto-descripcion" placeholder="Ej. Compra de monitor">
+                            </div>
+                            
+                            <!-- Fila 3 -->
+                            <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Categoría</label>
+                            <select class="form-select" id="edit-gasto-categoria">
+                                <option value="Administrativo">Administrativo</option>
+                                <option value="Mantenimiento">Mantenimiento</option>
+                                <option value="Piezas">Piezas</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                            </div>
+
+                            <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Asociado a</label>
+                            <input type="text" class="form-control" id="edit-gasto-asociado" placeholder="Ej. Gasto General">
+                            </div>
+                            
+                        </div>
+                        </form>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="guardarEdicionGasto()">Guardar Cambios</button>
+                    </div>
+                
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- MODAL: ELIMINAR GASTO                          -->
+        <!-- ============================================== -->
+        <div class="modal fade" id="modalEliminarGasto" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered rounded-4">
+                <div class="modal-content">
+                
+                    <div class="modal-header bg-danger text-white rounded-top-4">
+                        <h5 class="modal-title">Eliminar Registro</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    
+                    <div class="modal-body text-center py-4">
+                        <!-- Puedes usar un ícono o dejar solo el texto -->
+                        <h5 class="mb-3 text-danger fw-bold">¿Estás completamente seguro?</h5>
+                        <p class="text-muted">Esta acción eliminará esta factura del sistema y no se podrá recuperar.</p>
+                        <input type="hidden" id="delete-gasto-id">
+                    </div>
+                    
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <!-- Botón rojo para acciones destructivas -->
+                        <button type="button" class="btn btn-danger" onclick="confirmarEliminarGasto()">Sí, eliminar</button>
+                    </div>
+
                 </div>
             </div>
         </div>
