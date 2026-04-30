@@ -3,6 +3,7 @@ node_modules/
 
 # Variables de entorno (contienen contraseñas, claves de API, etc.)
 .env
+.crear_usuario.js
 
 # Archivos de bitácora/logs
 npm-debug.log*
