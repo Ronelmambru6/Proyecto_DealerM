@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
 const db = require('./db.js');
+const bcrypt = require('bcrypt');
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,26 +13,44 @@ app.use(express.static('public'));
 
 app.get('/', (req, res) => res.send('¡DealerManager funcionando al 100%!'));
 
+
 // ==========================================
-// RUTA DE LOGIN (AUTENTICACIÓN)
+// RUTA DE LOGIN (SEGURO CON BCRYPT)
 // ==========================================
 app.post('/login', async (req, res) => {
     try {
         const { usuario, password } = req.body;
-        const query = 'SELECT id, usuario, rol FROM usuarios WHERE usuario = ? AND password = ?';
-        const [users] = await db.query(query, [usuario, password]);
+        
+        // Buscamos al usuario en la base de datos solo por su nombre
+        const query = 'SELECT * FROM usuarios WHERE usuario = ?';
+        const [users] = await db.query(query, [usuario]);
 
+        // Verificamos si el usuario existe
         if (users.length > 0) {
-            res.json({ success: true, usuario: users[0] });
+            const usuarioDB = users[0];
+            
+            // Bcrypt compara la clave plana que escribió el usuario con el Hash de la DB
+            const passwordValida = await bcrypt.compare(password, usuarioDB.password);
+            
+            if (passwordValida) {
+                // Éxito: Le damos acceso, pero NUNCA enviamos la contraseña de vuelta al navegador
+                res.json({ 
+                    success: true, 
+                    usuario: { id: usuarioDB.id, usuario: usuarioDB.usuario, rol: usuarioDB.rol } 
+                });
+            } else {
+                // La contraseña no coincide
+                res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+            }
         } else {
+            // El usuario no existe
             res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
         }
     } catch (error) {
-        console.error("Error en el login:", error);
+        console.error("Error en el login seguro:", error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
-
 
 
 // ==========================================
@@ -48,9 +67,12 @@ app.post('/vehiculos', async (req, res) => {
 
 app.get('/vehiculos', async (req, res) => {
     try {
-        const [vehiculos] = await db.query('SELECT * FROM vehiculos ORDER BY fecha_ingreso DESC');
+        const [vehiculos] = await db.query('SELECT * FROM vehiculos ORDER BY fecha_registro DESC');
         res.json(vehiculos);
-    } catch (error) { res.status(500).json({ error: 'Error al obtener inventario' }); }
+    } catch (error) { 
+        console.error("Error al obtener inventario:", error);
+        res.status(500).json({ error: 'Error al obtener inventario' }); 
+    }
 });
 
 // VENDER (Simplificado)

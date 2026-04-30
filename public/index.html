@@ -7,6 +7,31 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+        /* =========================================
+       DISEÑO RESPONSIVO PARA MÓVILES
+       (Se activa solo en pantallas menores a 768px)
+       ========================================= */
+        @media (max-width: 768px) {
+            /* 1. Achicamos las letras de los títulos (th) y las celdas (td) */
+            .table th, 
+            .table td {
+                font-size: 0.75rem; /* Letra más pequeña (aprox 12px) */
+                padding: 0.4rem 0.2rem; /* Menos espacio en blanco alrededor */
+            }
+
+            /* 2. Achicamos los botones de acción para que quepan */
+            #tabla-inventario .btn {
+                font-size: 0.7rem;
+                padding: 0.2rem 0.4rem;
+            }
+
+            /* 3. Achicamos la barra de búsqueda */
+            .form-control {
+                font-size: 0.85rem;
+            }
+        }
+
+
         /* Estilo para el fondo del Login */
         #pantalla-login {
             background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.6)), 
@@ -22,10 +47,10 @@
             padding: 0;
         }
 
-    .card-login {
-        backdrop-filter: blur(2px);
-        background: rgba(255, 255, 255, 0.425) !important;
-    }
+        .card-login {
+            backdrop-filter: blur(2px);
+            background: rgba(255, 255, 255, 0.425) !important;
+        }
         
         
         /* 1. Sobreescribir el color Primario (de Azul a Rojo Elegante) */

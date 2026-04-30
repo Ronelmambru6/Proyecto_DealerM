@@ -179,7 +179,19 @@ async function cargarVehiculos() {
         const res = await fetch('http://localhost:3000/vehiculos');
         const vehiculos = await res.json();
         const tbody = document.getElementById('tabla-inventario');
-        if(!tbody) return; 
+        if(!tbody) return;
+
+        if(vehiculos.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-5">
+                        <div class="mb-2" style="font-size: 2.5rem;">🔃</div>
+                        <h6 class="fw-bold mb-1">Sin vehículos registrados</h6>
+                        <small>Aún no hay registros de algún vehículo. Haz clic en el botón azul para comenzar.</small>
+                    </td>
+                </tr>`;
+            return;
+        }
         
         tbody.innerHTML = ''; 
         document.getElementById('total-vehiculos').textContent = `${vehiculos.length} vehículos`;
