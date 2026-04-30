@@ -67,8 +67,22 @@ app.post('/vehiculos', async (req, res) => {
 
 app.get('/vehiculos', async (req, res) => {
     try {
+        const rolUsuario = req.query.rol; 
         const [vehiculos] = await db.query('SELECT * FROM vehiculos ORDER BY fecha_registro DESC');
+
+        if (rolUsuario === 'Vendedor') {
+            const vehiculosParaVendedor = vehiculos.map(vehiculo => {
+                return {
+                    ...vehiculo, // Copia la marca, año, modelo, etc.
+                    precio_venta: vehiculo.precio_venta * 0.96
+                };
+            });
+            
+            return res.json(vehiculosParaVendedor);
+        }
+
         res.json(vehiculos);
+
     } catch (error) { 
         console.error("Error al obtener inventario:", error);
         res.status(500).json({ error: 'Error al obtener inventario' }); 

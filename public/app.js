@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+const fReload = document.getElementById('titulo-emp');
+fReload.addEventListener('click', () => {
+    location.reload();
+})
+
 // Lógica de Inicio de Sesión
 document.getElementById('formulario-login')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -92,11 +97,6 @@ document.getElementById('btn-logout')?.addEventListener('click', () => {
     window.location.reload(); // Recarga la página y vuelve al login
 });
 
-
-const fReload = document.getElementById('titulo-emp');
-fReload.addEventListener('click', () => {
-    location.reload();
-})
 
 // Navegación
 const btnNavInventario = document.getElementById('nav-inventario');
@@ -176,7 +176,8 @@ document.getElementById('formulario-vehiculo')?.addEventListener('submit', async
 
 async function cargarVehiculos() {
     try {
-        const res = await fetch('http://localhost:3000/vehiculos');
+        const rol = usuarioActual ? usuarioActual.rol : '';
+        const res = await fetch(`http://localhost:3000/vehiculos?rol=${rol}`);
         const vehiculos = await res.json();
         const tbody = document.getElementById('tabla-inventario');
         if(!tbody) return;
