@@ -8,14 +8,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if(document.getElementById('modalEditar')) modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
     if(document.getElementById('modalGasto')) modalGasto = new bootstrap.Modal(document.getElementById('modalGasto'));
     
-    
+    document.getElementById('login-usuario').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Evitamos el comportamiento por defecto de HTML
+            document.getElementById('login-password').focus();
+        }
+    });
+
+    document.getElementById('login-password').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); 
+            document.querySelector('#formulario-login button').click(); 
+        }
+    });
 
     // Revisar si ya hay alguien con la sesión abierta
     const sesionGuardada = sessionStorage.getItem('sesion_dealer');
     if(sesionGuardada) {
         usuarioActual = JSON.parse(sesionGuardada);
         iniciarApp();
-        cargarMarcas();
     } else {
         document.getElementById('pantalla-login').classList.remove('d-none');
         document.getElementById('aplicacion-principal').classList.add('d-none');
@@ -68,7 +79,6 @@ document.getElementById('btn-acceso-vendedor')?.addEventListener('click', () => 
         rol: 'Vendedor' 
     };
     
-    // Guardamos en el navegador y entramos
     sessionStorage.setItem('sesion_dealer', JSON.stringify(sesionVendedor));
     usuarioActual = sesionVendedor;
     iniciarApp();
@@ -79,18 +89,24 @@ function iniciarApp() {
     document.getElementById('pantalla-login').classList.add('d-none');
     document.getElementById('aplicacion-principal').classList.remove('d-none');
 
+    const tituloBanner = document.getElementById('titulo-banner');
+    const subtituloBanner = document.getElementById('subtitulo-banner');
+
     // RESTRICCIONES DE VENDEDOR
     if (usuarioActual.rol === 'Vendedor') {
-        document.getElementById('nav-item-gastos')?.classList.add('d-none'); // Ocultar Pestaña Gastos
-        document.getElementById('btn-registrar-vehiculo')?.classList.add('d-none'); // Ocultar Botón Registrar
-        document.getElementById('seccion-registro')?.classList.add('d-none'); // Ocultar panel para registrar vehiculos
+        document.getElementById('nav-item-gastos')?.classList.add('d-none'); 
+        document.getElementById('btn-registrar-vehiculo')?.classList.add('d-none'); 
+        document.getElementById('seccion-registro')?.classList.add('d-none');
+        document.getElementById('nav-gastos')?.classList.add('d-none');
+        if(tituloBanner) tituloBanner.textContent = 'Nuestro Inventario';
+        if(subtituloBanner) subtituloBanner.textContent = 'Explora los nuestros vehículos disponibles para la venta y adquiere comisiones.'
     } else {
         // Es ADMIN, mostramos todo
         document.getElementById('nav-item-gastos')?.classList.remove('d-none');
         document.getElementById('btn-registrar-vehiculo')?.classList.remove('d-none');
-        cargarGastos(); // Solo cargamos los gastos si es Admin
+        cargarGastos();
+        cargarMarcas();
     }
-    
     cargarVehiculos();
 }
 
@@ -223,7 +239,7 @@ async function cargarVehiculos() {
             // 3. Dibujamos la fila
             const fila = document.createElement('tr');
             fila.innerHTML = `
-                <td><strong>${vehiculo.marca} ${vehiculo.modelo}</strong><br><small class="text-muted">${vehiculo.color} • ${vehiculo.millaje} mi • ${vehiculo.tipo_combustible}</small></td>
+                <td>${vehiculo.marca} ${vehiculo.modelo}<br><small class="text-muted">${vehiculo.color} • ${vehiculo.millaje} mi • ${vehiculo.tipo_combustible}</small></td>
                 <td>${vehiculo.anio}</td>
                 <td><small class="font-monospace">${vehiculo.vin}</small></td>
                 <td><span class="badge ${colorEstado}">${vehiculo.estado}</span></td>
@@ -364,7 +380,6 @@ async function cargarGastos() {
         const tbody = document.getElementById('tabla-gastos');
         if(!tbody) return;
         
-        // --- MENSAJE DE "SIN DATOS" ---
         if (gastos.length === 0) { 
             tbody.innerHTML = `
                 <tr>
@@ -400,7 +415,7 @@ async function cargarGastos() {
             fila.innerHTML = `
                 <td>${fecha}</td>
                 <td>
-                    <strong>${gasto.concepto}</strong><br> <span class="badge ${colorTipo} mt-1">${gasto.categoria}</span>
+                    <strong>${gasto.concepto}</strong> <span class="badge ${colorTipo} mt-1 ms-2">${gasto.categoria}</span>
                     ${dataFiscal}
                 </td>
                 <td>${asociado}</td>
