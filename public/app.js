@@ -140,6 +140,11 @@ function cerrarMenuMovil() {
 if (btnNavInventario && btnNavGastos) {
     btnNavInventario.addEventListener('click', (e) => {
         e.preventDefault();
+
+        if (usuarioActual && usuarioActual.rol === 'Vendedor') {
+            return;
+        }
+
         seccionInventario.classList.remove('d-none');
         seccionGastos.classList.add('d-none');
         btnNavInventario.classList.add('active');
@@ -154,10 +159,9 @@ if (btnNavInventario && btnNavGastos) {
     btnNavGastos.addEventListener('click', (e) => {
         e.preventDefault();
 
-        // --- BARRERA DE SEGURIDAD PARA VENDEDORES ---
         if (usuarioActual && usuarioActual.rol === 'Vendedor') {
             alert("🔒 Acceso denegado: No puede acceder aquí.");
-            return; // Detiene el código aquí, la pantalla no cambia
+            return;
         }
 
         seccionInventario.classList.add('d-none');
@@ -172,7 +176,7 @@ if (btnNavInventario && btnNavGastos) {
         cerrarMenuMovil();
     });
 } else {
-    console.error("OJO: Javascript no encontró los IDs nav-inventario o nav-gastos en tu HTML.");
+    console.error(error);
 }
 
 // ==========================================
