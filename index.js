@@ -233,4 +233,4 @@ app.delete('/gastos/:id', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Servidor de Dealer Manager corriendo exitosamente en el puerto ${PORT}`));

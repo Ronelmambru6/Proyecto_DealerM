@@ -54,7 +54,7 @@ document.getElementById('formulario-login')?.addEventListener('submit', async (e
     };
 
     try {
-        const res = await fetch('http://localhost:3000/login', {
+        const res = await fetch('/login', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credenciales)
         });
@@ -196,7 +196,7 @@ document.getElementById('formulario-vehiculo')?.addEventListener('submit', async
         tipo_combustible: document.getElementById('tipo_combustible').value
     };
     try {
-        const res = await fetch('http://localhost:3000/vehiculos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nuevoVehiculo) });
+        const res = await fetch('/vehiculos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nuevoVehiculo) });
         if (res.ok) { document.getElementById('formulario-vehiculo').reset(); cargarVehiculos(); }
     } catch (error) { console.error(error); }
 });
@@ -204,7 +204,7 @@ document.getElementById('formulario-vehiculo')?.addEventListener('submit', async
 async function cargarVehiculos() {
     try {
         const rol = usuarioActual ? usuarioActual.rol : '';
-        const res = await fetch(`http://localhost:3000/vehiculos?rol=${rol}`);
+        const res = await fetch(`/vehiculos?rol=${rol}`);
         const vehiculos = await res.json();
         const tbody = document.getElementById('tabla-inventario');
         if(!tbody) return;
@@ -275,7 +275,7 @@ function abrirModalVender(id) { vehiculoAVenderId = id; modalVender.show(); }
 // Vender: peticion directa
 document.getElementById('btn-confirmar-venta')?.addEventListener('click', async () => {
     try {
-        const res = await fetch(`http://localhost:3000/vehiculos/${vehiculoAVenderId}/vender`, { method: 'PUT' });
+        const res = await fetch(`/vehiculos/${vehiculoAVenderId}/vender`, { method: 'PUT' });
         if (res.ok) { modalVender.hide(); cargarVehiculos(); setTimeout(() => alert("¡Vendido!"), 300); } 
     } catch (error) { console.error(error); }
 });
@@ -284,7 +284,7 @@ let vehiculoAEditarId = null;
 async function abrirModalEditar(id) {
     vehiculoAEditarId = id;
     try {
-        const res = await fetch(`http://localhost:3000/vehiculos/${id}`);
+        const res = await fetch(`/vehiculos/${id}`);
         const v = await res.json();
         document.getElementById('edit_marca').value = v.marca;
         document.getElementById('edit_modelo').value = v.modelo;
@@ -310,7 +310,7 @@ document.getElementById('btn-guardar-edicion')?.addEventListener('click', async 
     };
     if(document.getElementById('edit_estado')) datos.estado = document.getElementById('edit_estado').value;
     try {
-        const res = await fetch(`http://localhost:3000/vehiculos/${vehiculoAEditarId}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(datos) });
+        const res = await fetch(`/vehiculos/${vehiculoAEditarId}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(datos) });
         if (res.ok) { document.activeElement.blur(); modalEditar.hide(); cargarVehiculos(); }
     } catch (error) { console.error(error); }
 });
@@ -376,7 +376,7 @@ document.getElementById('marca')?.addEventListener('change', (e) => {
 // ==========================================
 async function cargarGastos() {
     try {
-        const res = await fetch('http://localhost:3000/gastos');
+        const res = await fetch('/gastos');
         const gastos = await res.json();
         listaGastosActual = gastos;
         const tbody = document.getElementById('tabla-gastos');
@@ -442,7 +442,7 @@ async function cargarGastos() {
 
 async function cargarVehiculosParaGastos() {
     try {
-        const res = await fetch('http://localhost:3000/vehiculos');
+        const res = await fetch('/vehiculos');
         const vehiculos = await res.json();
         const select = document.getElementById('gasto_vehiculo_id');
         if(!select) return;
@@ -503,7 +503,7 @@ document.getElementById('formulario-gasto')?.addEventListener('submit', async (e
     };
 
     try {
-        const res = await fetch('http://localhost:3000/gastos', { 
+        const res = await fetch('/gastos', { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify(nuevoGasto) 
@@ -525,7 +525,7 @@ async function confirmarEliminarVehiculo() {
     const idVehiculo = document.getElementById('delete-vehiculo-id').value;
     document.activeElement.blur(); 
     try {
-        const res = await fetch(`http://localhost:3000/vehiculos/${idVehiculo}`, {
+        const res = await fetch(`/vehiculos/${idVehiculo}`, {
             method: 'DELETE'
         });
 
@@ -582,7 +582,7 @@ async function guardarEdicionGasto() {
     };
 
     try {
-        const res = await fetch(`http://localhost:3000/gastos/${idGasto}`, {
+        const res = await fetch(`/gastos/${idGasto}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosActualizados)
@@ -611,8 +611,7 @@ async function confirmarEliminarGasto() {
     const idGasto = document.getElementById('delete-gasto-id').value;
 
     try {
-        // Enviamos la petición DELETE a tu servidor (Asegúrate de crear esta ruta DELETE en index.js)
-        const res = await fetch(`http://localhost:3000/gastos/${idGasto}`, {
+        const res = await fetch(`/gastos/${idGasto}`, {
             method: 'DELETE'
         });
 
