@@ -235,9 +235,15 @@ async function cargarVehiculos() {
             let botonesHTML = '';
             if (usuarioActual && usuarioActual.rol === 'Admin') {
                 botonesHTML = `
-                    <button class="btn btn-sm btn-outline-primary mb-1 shadow-sm" onclick="abrirModalEditar(${vehiculo.id})">Editar</button>
-                    <button class="btn btn-sm btn-outline-success mb-1 shadow-sm" onclick="abrirModalVender(${vehiculo.id})">Vender</button>
-                    <button class="btn btn-sm btn-outline-danger mb-1 shadow-sm" onclick="abrirModalEliminarVehiculo(${vehiculo.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-outline-primary mb-1 shadow-sm" onclick="abrirModalEditar(${vehiculo.id})">
+                        <span class="d-none d-md-inline">Editar</span><span class="d-md-none">✏️</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-success mb-1 shadow-sm" onclick="abrirModalVender(${vehiculo.id})">
+                        <span class="d-none d-md-inline">Vender</span><span class="d-md-none">✅</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger mb-1 shadow-sm" onclick="abrirModalEliminarVehiculo(${vehiculo.id})">
+                        <span class="d-none d-md-inline">Eliminar</span><span class="d-md-none">🗑️</span>
+                    </button>
                 `;
             } else {
                 // Si es vendedor, solo ve una etiqueta
@@ -247,9 +253,15 @@ async function cargarVehiculos() {
             // 3. Dibujamos la fila
             const fila = document.createElement('tr');
             fila.innerHTML = `
-                <td>${vehiculo.marca} ${vehiculo.modelo}<br><small class="text-muted">${vehiculo.color} • ${vehiculo.millaje} mi • ${vehiculo.tipo_combustible}</small></td>
-                <td>${vehiculo.anio}</td>
-                <td><small class="font-monospace">${vehiculo.vin}</small></td>
+                <td>
+                    ${vehiculo.marca} ${vehiculo.modelo}<br>
+                    <small class="text-muted">${vehiculo.color} • ${vehiculo.millaje} mi • ${vehiculo.tipo_combustible}</small>
+                    <div class="d-md-none mt-1">
+                        <small class="text-muted">Año: <strong>${vehiculo.anio}</strong> &nbsp;|&nbsp; VIN: <span class="font-monospace">${vehiculo.vin}</span></small>
+                    </div>
+                </td>
+                <td class="d-none d-md-table-cell">${vehiculo.anio}</td>
+                <td class="d-none d-md-table-cell"><small class="font-monospace">${vehiculo.vin}</small></td>
                 <td><span class="badge ${colorEstado}">${vehiculo.estado}</span></td>
                 <td class="fw-bold text-success">${precio}</td>
                 <td>${botonesHTML}</td>
