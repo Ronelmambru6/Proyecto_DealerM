@@ -98,6 +98,7 @@ function iniciarApp() {
 
     // RESTRICCIONES DE VENDEDOR
     if (usuarioActual.rol === 'Vendedor') {
+        document.getElementById('nav-item-vendidos')?.classList.add('d-none');
         document.getElementById('nav-item-gastos')?.classList.add('d-none'); 
         document.getElementById('btn-registrar-vehiculo')?.classList.add('d-none'); 
         document.getElementById('seccion-registro')?.classList.add('d-none');
@@ -110,6 +111,7 @@ function iniciarApp() {
         document.getElementById('btn-registrar-vehiculo')?.classList.remove('d-none');
         cargarGastos();
         cargarMarcas();
+        cargarVendidos();
     }
     cargarVehiculos();
 }
@@ -128,6 +130,8 @@ const seccionInventario = document.getElementById('seccion-inventario');
 const seccionGastos = document.getElementById('seccion-gastos');
 const tituloBanner = document.getElementById('titulo-banner');
 const subtituloBanner = document.getElementById('subtitulo-banner');
+const btnNavVendidos = document.getElementById('nav-vendidos');
+const seccionVendidos = document.getElementById('seccion-vendidos');
 
 //funcion para ocultar menu en celulares
 function cerrarMenuMovil() {
@@ -146,14 +150,29 @@ if (btnNavInventario && btnNavGastos) {
         }
 
         seccionInventario.classList.remove('d-none');
+        seccionVendidos.classList.add('d-none');
         seccionGastos.classList.add('d-none');
         btnNavInventario.classList.add('active');
         btnNavGastos.classList.remove('active');
+        btnNavVendidos.classList.remove('active');
 
         tituloBanner.textContent = 'Gestión de Inventario';
         subtituloBanner.textContent = 'Registra y administra tus vehículos al instante.';
 
         cerrarMenuMovil();
+    });
+
+    btnNavVendidos.addEventListener('click', (e) => {
+    e.preventDefault();
+    seccionInventario.classList.add('d-none');
+    seccionGastos.classList.add('d-none');
+    seccionVendidos.classList.remove('d-none');
+    btnNavInventario.classList.remove('active');
+    btnNavGastos.classList.remove('active');
+    btnNavVendidos.classList.add('active');
+    tituloBanner.textContent = 'Vehículos Vendidos';
+    subtituloBanner.textContent = 'Historial completo de vehículos vendidos.';
+    cerrarMenuMovil();
     });
 
     btnNavGastos.addEventListener('click', (e) => {
@@ -164,9 +183,11 @@ if (btnNavInventario && btnNavGastos) {
             return;
         }
 
-        seccionInventario.classList.add('d-none');
         seccionGastos.classList.remove('d-none');
+        seccionInventario.classList.add('d-none');
+        seccionVendidos.classList.add('d-none');
         btnNavInventario.classList.remove('active');
+        btnNavVendidos.classList.remove('active');
         btnNavGastos.classList.add('active');
 
         // Cambiamos el banner para Gastos
@@ -282,13 +303,36 @@ document.getElementById('buscador-inventario')?.addEventListener('input', (e) =>
 // VENTAS Y EDICIÓN
 // ==========================================
 let vehiculoAVenderId = null; 
-function abrirModalVender(id) { vehiculoAVenderId = id; modalVender.show(); }
+function abrirModalVender(id) {
+    vehiculoAVenderId = id;
+    const precioInput = document.getElementById('precio-venta-final');
+    if (precioInput) precioInput.value = '';
 
-// Vender: peticion directa
+    const filas = document.querySelectorAll('#tabla-inventario tr');
+    filas.forEach(fila => {
+        if (fila.innerHTML.includes(`abrirModalVender(${id})`)) {
+            const precioTexto = fila.querySelector('td.fw-bold.text-success')?.textContent || '';
+            const precioLimpio = precioTexto.replace(/[^0-9.]/g, '');
+            if (precioInput && precioLimpio) precioInput.value = precioLimpio;
+        }
+    });
+
+    modalVender.show();
+}
+
+// Vender
 document.getElementById('btn-confirmar-venta')?.addEventListener('click', async () => {
     try {
-        const res = await fetch(`/vehiculos/${vehiculoAVenderId}/vender`, { method: 'PUT' });
-        if (res.ok) { modalVender.hide(); cargarVehiculos(); setTimeout(() => alert("¡Vendido!"), 300); } 
+        const precioFinal = parseFloat(document.getElementById('precio-venta-final').value);
+        if (!precioFinal || precioFinal <= 0) {
+            alert('Por favor ingresa el precio de venta.');
+            return;
+        }
+        const res = await fetch(`/vehiculos/${vehiculoAVenderId}/vender`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ precio_venta_final: precioFinal })
+        });
     } catch (error) { console.error(error); }
 });
 
@@ -380,6 +424,54 @@ document.getElementById('marca')?.addEventListener('change', (e) => {
     if (baseDatosCarros[m]) { baseDatosCarros[m].forEach(md => dl.appendChild(new Option(md, md))); mod.placeholder = "Selecciona el modelo"; } 
     else { mod.placeholder = "Escribe manualmente"; }
 });
+
+
+async function cargarVendidos() {
+    try {
+        const res = await fetch('/vehiculos/vendidos');
+        const vendidos = await res.json();
+        const tbody = document.getElementById('tabla-vendidos');
+        if (!tbody) return;
+
+        if (vendidos.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-5">
+                        <div class="mb-2" style="font-size: 2.5rem;">🏁</div>
+                        <h6 class="fw-bold mb-1">Sin ventas registradas</h6>
+                        <small>Aún no se ha vendido ningún vehículo.</small>
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = '';
+        document.getElementById('total-vendidos').textContent = `${vendidos.length} vendidos`;
+
+        vendidos.forEach(vehiculo => {
+            const precio = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(vehiculo.precio_venta);
+            const fechaVenta = new Date(vehiculo.fecha_venta).toLocaleDateString('es-DO');
+
+            const fila = document.createElement('tr');
+            fila.innerHTML = `
+                <td>
+                    ${vehiculo.marca} ${vehiculo.modelo}<br>
+                    <small class="text-muted">${vehiculo.color} • ${vehiculo.millaje} mi • ${vehiculo.tipo_combustible}</small>
+                    <div class="d-md-none mt-1">
+                        <small class="text-muted">Año: <strong>${vehiculo.anio}</strong> &nbsp;|&nbsp; VIN: <span class="font-monospace">${vehiculo.vin}</span></small>
+                    </div>
+                </td>
+                <td class="d-none d-md-table-cell">${vehiculo.anio}</td>
+                <td class="d-none d-md-table-cell"><small class="font-monospace">${vehiculo.vin}</small></td>
+                <td class="fw-bold text-success">${precio}</td>
+                <td><span class="badge bg-primary">${fechaVenta}</span></td>
+            `;
+            tbody.appendChild(fila);
+        });
+    } catch (error) {
+        console.error("Error al cargar vendidos:", error);
+    }
+}
 
 
 

@@ -68,13 +68,13 @@ app.post('/vehiculos', async (req, res) => {
 app.get('/vehiculos', async (req, res) => {
     try {
         const rolUsuario = req.query.rol; 
-        const [vehiculos] = await db.query('SELECT * FROM vehiculos ORDER BY fecha_registro DESC');
+        const [vehiculos] = await db.query('SELECT * FROM vehiculos WHERE fecha_venta IS NULL ORDER BY fecha_registro DESC');
 
         if (rolUsuario === 'Vendedor') {
             const vehiculosParaVendedor = vehiculos.map(vehiculo => {
                 return {
                     ...vehiculo, // Copia la marca, año, modelo, etc.
-                    precio_venta: vehiculo.precio_venta * 0.96
+                    precio_venta: vehiculo.precio_venta * 0.97
                 };
             });
             
@@ -89,16 +89,33 @@ app.get('/vehiculos', async (req, res) => {
     }
 });
 
-// VENDER (Simplificado)
+
+// Confirmacion de VENTA
+// VENDER
 app.put('/vehiculos/:id/vender', async (req, res) => {
     try {
-        // Solo cambiamos el estado y la fecha, sin pedir precios extras
-        const query = `UPDATE vehiculos SET estado = 'Vendido', fecha_venta = CURRENT_TIMESTAMP WHERE id = ?`;
-        const [resultado] = await db.query(query, [req.params.id]);
+        const { precio_venta_final } = req.body;
+        const [resultado] = await db.query(query, [precio_venta_final, req.params.id]);
+        const query = `UPDATE vehiculos SET fecha_venta = CURRENT_TIMESTAMP, precio_venta = ? WHERE id = ?`;
         if (resultado.affectedRows === 0) return res.status(404).json({ error: 'Vehículo no encontrado' });
         res.json({ mensaje: '¡Vehículo vendido!' });
-    } catch (error) { res.status(500).json({ error: 'Error al procesar la venta' }); }
+    } catch (error) {
+        console.error("Error al vender:", error);
+        res.status(500).json({ error: error.message });
+    }
 });
+
+// Despliegue de VENDIDOS
+app.get('/vehiculos/vendidos', async (req, res) => {
+    try {
+        const [vendidos] = await db.query('SELECT * FROM vehiculos WHERE fecha_venta IS NOT NULL ORDER BY fecha_venta DESC');
+        res.json(vendidos);
+    } catch (error) {
+        console.error("Error al obtener vendidos:", error);
+        res.status(500).json({ error: 'Error al obtener vehículos vendidos' });
+    }
+});
+
 
 app.get('/vehiculos/:id', async (req, res) => {
     try {
