@@ -98,6 +98,8 @@ function iniciarApp() {
 
     // RESTRICCIONES DE VENDEDOR
     if (usuarioActual.rol === 'Vendedor') {
+        window.history.pushState({}, '', '/inventario');
+
         document.getElementById('nav-item-vendidos')?.classList.add('d-none');
         document.getElementById('nav-item-gastos')?.classList.add('d-none'); 
         document.getElementById('btn-registrar-vehiculo')?.classList.add('d-none'); 
@@ -105,6 +107,7 @@ function iniciarApp() {
         document.getElementById('nav-gastos')?.classList.add('d-none');
         if(tituloBanner) tituloBanner.textContent = 'Nuestro Inventario';
         if(subtituloBanner) subtituloBanner.textContent = 'Explora los nuestros vehículos disponibles para la venta y adquiere comisiones.'
+
     } else {
         // Es ADMIN, mostramos todo
         document.getElementById('nav-item-gastos')?.classList.remove('d-none');
@@ -114,12 +117,28 @@ function iniciarApp() {
         cargarVendidos();
     }
     cargarVehiculos();
+
+    const rutaActual = window.location.pathname;
+
+    // Si intenta ir a Gastos y NO es vendedor
+    if (rutaActual === '/gastos' && usuarioActual.rol !== 'Vendedor') {
+        btnNavGastos.click();
+    } 
+    // Si intenta ir a Vendidos y NO es vendedor
+    else if (rutaActual === '/vendidos' && usuarioActual.rol !== 'Vendedor') {
+        btnNavVendidos.click();
+    } 
+    // Comportamiento por defecto (Ruta /login, /inventario, o accesos denegados)
+    else {
+        btnNavInventario.click();
+    }
 }
 
 // Lógica de Cerrar Sesión
 document.getElementById('btn-logout')?.addEventListener('click', () => {
     sessionStorage.removeItem('sesion_dealer');
-    window.location.reload(); // Recarga la página y vuelve al login
+    window.location.href = '/login';
+    window.location.replace('/login'); // Recarga la página y vuelve al login
 });
 
 
@@ -149,6 +168,8 @@ if (btnNavInventario && btnNavGastos) {
             return;
         }
 
+        window.history.pushState({}, '', '/inventario');
+
         seccionInventario.classList.remove('d-none');
         seccionVendidos.classList.add('d-none');
         seccionGastos.classList.add('d-none');
@@ -164,6 +185,9 @@ if (btnNavInventario && btnNavGastos) {
 
     btnNavVendidos.addEventListener('click', (e) => {
     e.preventDefault();
+
+    window.history.pushState({}, '', '/vendidos');
+
     seccionInventario.classList.add('d-none');
     seccionGastos.classList.add('d-none');
     seccionVendidos.classList.remove('d-none');
@@ -182,6 +206,8 @@ if (btnNavInventario && btnNavGastos) {
             alert("🔒 Acceso denegado: No puede acceder aquí.");
             return;
         }
+
+        window.history.pushState({}, '', '/gastos');
 
         seccionGastos.classList.remove('d-none');
         seccionInventario.classList.add('d-none');
@@ -328,11 +354,25 @@ document.getElementById('btn-confirmar-venta')?.addEventListener('click', async 
             alert('Por favor ingresa el precio de venta.');
             return;
         }
+
+        // Desactivar el botón temporalmente para evitar doble clic
+        const btnConfirmar = document.getElementById('btn-confirmar-venta');
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = 'Procesando...';
+
         const res = await fetch(`/vehiculos/${vehiculoAVenderId}/vender`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ precio_venta_final: precioFinal })
         });
+
+        if (res.ok) {
+            modalVender.hide();
+            document.activeElement.blur();
+            document.getElementById('precio-venta-final').value = '';
+            cargarVehiculos();
+            cargarVendidos();
+        }
     } catch (error) { console.error(error); }
 });
 
@@ -428,7 +468,7 @@ document.getElementById('marca')?.addEventListener('change', (e) => {
 
 async function cargarVendidos() {
     try {
-        const res = await fetch('/vehiculos/vendidos');
+        const res = await fetch('/vehiculos/vendidos'); 
         const vendidos = await res.json();
         const tbody = document.getElementById('tabla-vendidos');
         if (!tbody) return;
@@ -436,7 +476,7 @@ async function cargarVendidos() {
         if (vendidos.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-5">
+                    <td colspan="6" class="text-center text-muted py-5">
                         <div class="mb-2" style="font-size: 2.5rem;">🏁</div>
                         <h6 class="fw-bold mb-1">Sin ventas registradas</h6>
                         <small>Aún no se ha vendido ningún vehículo.</small>
@@ -452,6 +492,21 @@ async function cargarVendidos() {
             const precio = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(vehiculo.precio_venta);
             const fechaVenta = new Date(vehiculo.fecha_venta).toLocaleDateString('es-DO');
 
+            // 1. Evaluamos si es Admin para mostrar los botones
+            let botonesHTML = '';
+            if (usuarioActual && usuarioActual.rol === 'Admin') {
+                botonesHTML = `
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary shadow-sm" onclick="editarPrecioVenta(${vehiculo.id}, ${vehiculo.precio_venta})" title="Corregir Precio">
+                            ✏️
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning shadow-sm" onclick="revertirVenta(${vehiculo.id})" title="Devolver al Inventario">
+                            ↩️
+                        </button>
+                    </div>
+                `;
+            }
+
             const fila = document.createElement('tr');
             fila.innerHTML = `
                 <td>
@@ -465,11 +520,64 @@ async function cargarVendidos() {
                 <td class="d-none d-md-table-cell"><small class="font-monospace">${vehiculo.vin}</small></td>
                 <td class="fw-bold text-success">${precio}</td>
                 <td><span class="badge bg-primary">${fechaVenta}</span></td>
+                
+                <td>${botonesHTML}</td>
             `;
             tbody.appendChild(fila);
         });
     } catch (error) {
         console.error("Error al cargar vendidos:", error);
+    }
+}
+
+// ==========================================
+// FUNCIONES PARA GESTIONAR ERRORES EN VENTAS
+// ==========================================
+
+async function revertirVenta(idVehiculo) {
+    // Pedimos confirmación para evitar clics accidentales
+    const confirmacion = confirm("¿Estás seguro de que deseas anular esta venta? El vehículo volverá al inventario como 'Disponible'.");
+    
+    if (confirmacion) {
+        try {
+            const res = await fetch(`/vehiculos/${idVehiculo}/revertir-venta`, { method: 'PUT' });
+            if (res.ok) {
+                cargarVendidos(); 
+                cargarVehiculos();
+                alert("La venta ha sido anulada. El vehículo regresó al inventario.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+}
+
+async function editarPrecioVenta(idVehiculo, precioActual) {
+    // Usamos un prompt para pedir el nuevo precio directamente
+    let nuevoPrecio = prompt(`Ingrese el precio de venta correcto:\n(Precio actual: $${precioActual})`, precioActual);
+    
+    // Si el usuario presiona Cancelar, nuevoPrecio será null
+    if (nuevoPrecio !== null) {
+        nuevoPrecio = parseFloat(nuevoPrecio);
+        
+        if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
+            alert("Por favor, ingrese un monto válido.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`/vehiculos/${idVehiculo}/editar-venta`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nuevo_precio: nuevoPrecio })
+            });
+
+            if (res.ok) {
+                cargarVendidos();
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
     }
 }
 
@@ -480,7 +588,7 @@ async function cargarVendidos() {
 // ==========================================
 async function cargarGastos() {
     try {
-        const res = await fetch('/gastos');
+        const res = await fetch('/api/gastos');
         const gastos = await res.json();
         listaGastosActual = gastos;
         const tbody = document.getElementById('tabla-gastos');
@@ -489,7 +597,7 @@ async function cargarGastos() {
         if (gastos.length === 0) { 
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="text-center text-muted py-5">
+                    <td colspan="6" class="text-center text-muted py-5">
                         <div class="mb-2" style="font-size: 2.5rem;">📭</div>
                         <h6 class="fw-bold mb-1">Sin datos registrados</h6>
                         <small>Aún no hay facturas ni gastos. Haz clic en el botón azul para comenzar.</small>
@@ -607,7 +715,7 @@ document.getElementById('formulario-gasto')?.addEventListener('submit', async (e
     };
 
     try {
-        const res = await fetch('/gastos', { 
+        const res = await fetch('/api/gastos', { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify(nuevoGasto) 
@@ -686,7 +794,7 @@ async function guardarEdicionGasto() {
     };
 
     try {
-        const res = await fetch(`/gastos/${idGasto}`, {
+        const res = await fetch(`/api/gastos/${idGasto}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datosActualizados)
@@ -715,7 +823,7 @@ async function confirmarEliminarGasto() {
     const idGasto = document.getElementById('delete-gasto-id').value;
 
     try {
-        const res = await fetch(`/gastos/${idGasto}`, {
+        const res = await fetch(`/api/gastos/${idGasto}`, {
             method: 'DELETE'
         });
 

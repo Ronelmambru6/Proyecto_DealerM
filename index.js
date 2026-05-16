@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db.js');
 const bcrypt = require('bcrypt');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -11,7 +12,28 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-app.get('/', (req, res) => res.send('¡DealerManager funcionando al 100%!'));
+// Rutas de navegación para el panel interno
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/inventario', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/vendidos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/gastos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+})
+
+
 
 
 // ==========================================
@@ -95,13 +117,39 @@ app.get('/vehiculos', async (req, res) => {
 app.put('/vehiculos/:id/vender', async (req, res) => {
     try {
         const { precio_venta_final } = req.body;
-        const [resultado] = await db.query(query, [precio_venta_final, req.params.id]);
         const query = `UPDATE vehiculos SET fecha_venta = CURRENT_TIMESTAMP, precio_venta = ? WHERE id = ?`;
+        const [resultado] = await db.query(query, [precio_venta_final, req.params.id]);
         if (resultado.affectedRows === 0) return res.status(404).json({ error: 'Vehículo no encontrado' });
         res.json({ mensaje: '¡Vehículo vendido!' });
     } catch (error) {
         console.error("Error al vender:", error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Revertir Venta (Devolver al inventario)
+app.put('/vehiculos/:id/revertir-venta', async (req, res) => {
+    try {
+        // Al poner la fecha en NULL, el vehículo vuelve a aparecer en el inventario
+        const query = `UPDATE vehiculos SET fecha_venta = NULL WHERE id = ?`;
+        await db.query(query, [req.params.id]);
+        res.json({ success: true, mensaje: 'Venta revertida exitosamente' });
+    } catch (error) {
+        console.error("Error al revertir:", error);
+        res.status(500).json({ error: 'Error del servidor' });
+    }
+});
+
+// Editar precio de un vehículo ya vendido
+app.put('/vehiculos/:id/editar-venta', async (req, res) => {
+    try {
+        const { nuevo_precio } = req.body;
+        const query = `UPDATE vehiculos SET precio_venta = ? WHERE id = ?`;
+        await db.query(query, [nuevo_precio, req.params.id]);
+        res.json({ success: true, mensaje: 'Precio actualizado' });
+    } catch (error) {
+        console.error("Error al editar precio:", error);
+        res.status(500).json({ error: 'Error del servidor' });
     }
 });
 
@@ -160,7 +208,7 @@ app.delete('/vehiculos/:id', async (req, res) => {
 // ==========================================
 // MÓDULO DE GASTOS
 // ==========================================
-app.get('/gastos', async (req, res) => {
+app.get('/api/gastos', async (req, res) => {
     try {
         const query = `
             SELECT g.*, v.marca, v.modelo 
@@ -176,7 +224,7 @@ app.get('/gastos', async (req, res) => {
 });
 
 // Guardar
-app.post('/gastos', async (req, res) => {
+app.post('/api/gastos', async (req, res) => {
     try {
         const { vehiculo_id, categoria, concepto, rnc_suplidor, ncf, tipo_comprobante, monto_subtotal, itbis, monto_total, fecha_gasto } = req.body;
         
@@ -197,7 +245,7 @@ app.post('/gastos', async (req, res) => {
 // ==========================================
 // RUTA PARA EDITAR UN GASTO (PUT)
 // ==========================================
-app.put('/gastos/:id', async (req, res) => {
+app.put('/api/gastos/:id', async (req, res) => {
     try {
         const idGasto = req.params.id;
         // Extraemos los datos que nos mandó el frontend en el body
@@ -230,7 +278,7 @@ app.put('/gastos/:id', async (req, res) => {
 // ==========================================
 // RUTA PARA ELIMINAR UN GASTO (DELETE)
 // ==========================================
-app.delete('/gastos/:id', async (req, res) => {
+app.delete('/api/gastos/:id', async (req, res) => {
     try {
         const idGasto = req.params.id;
 
